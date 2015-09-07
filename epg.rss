@@ -1,0 +1,224 @@
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/">
+<script>
+urlpath = "http://ims.haoims.com/ims/iptv/HaoimsTV_";
+tmppath = "/usr/local/etc/dvdplayer/HaoimsTV_";
+Flag = readStringFromFile(tmppath+"iptvepg_bg.png");
+if (Flag==null) dldUrl2File(urlpath+"iptvepg_bg.png",tmppath+"iptvepg_bg.png");
+playid = getEnv("PlayID");
+playdate = 0;
+itemSize =getEnv("itemSize");
+epgArray = getEnv("epgArray");
+epgID =getStringArrayAt(epgArray, playid);
+tvbackxml = getEnv("tvbackxml");
+TVBACKDATE="/tmp/www/tvbackdate.txt";
+
+if (epgID == null || epgID =="")
+{
+timeSize =0;
+nameTV ="没有频道标识";
+itemSize = 0;
+
+}else{
+    setTimeZone("+8 $[TAIPEI]");
+    timeDate = getTimeDate();
+    year = getStringArrayAt(timeDate , 0);
+    month = getStringArrayAt(timeDate , 1);
+    if(month $lt; 10) { month = "0" + month; }
+
+    day = readStringFromFile(TVBACKDATE);
+    if (day==null) { day = getStringArrayAt(timeDate , 2);
+                    writeStringToFile(TVBACKDATE, day); }
+    if(day $lt; 10) { day = "0" + day; }
+    dayofweek=getWeek(year+"-"+month"+"-"+day);
+    if(dayofweek == 0) {dayofweek = 7;}
+executeScript("gettvlist");
+</script>
+
+
+
+<gettvlist>
+currentUrl ="http://127.0.0.1/epg.php?c="+epgID+"&amp;d="+year+"/"+month+"/"+day;
+itemSize = null;
+
+
+dlok = loadXMLFile(currentUrl);
+  cancelIdle();
+  if (dlok != null)
+  {
+
+    itemSize = getXMLElementCount("channel","tv");
+    print("Item Size = ",  itemSize);
+
+    if (itemSize > 0)
+    {
+      count=0;
+      title =null;
+      time =nul;
+
+
+      titleArray = null;   	  
+      timeArray = null;
+			nameTV  = getXMLAttribute( "channel",0, "name");
+			dateTV  = getXMLAttribute( "channel",0, "date");
+
+			time  = getXMLAttribute( "channel", "tv",  count, "time");
+   while(1)
+      {
+			title  = getXMLAttribute( "channel", "tv",  count, "program");
+			time  = getXMLAttribute( "channel", "tv",  count, "time");
+
+
+        titleArray  = pushBackStringArray(titleArray, title);
+        timeArray  = pushBackStringArray(timeArray, time);
+
+	count += 1;
+        if (count ==  itemSize)
+        {
+               break;
+        }
+      }
+
+ hour = getStringArrayAt(timeDate , 3);
+    if (hour &gt;= 24)
+      {hour = hour -24;}
+
+    minute = getStringArrayAt(timeDate , 4);
+    if ( 10 &gt; Integer(minute))
+      {minute = "0" +minute;}
+
+timeSize =0;
+nowtimeStr = hour+""+minute;
+
+while (getStringArrayAt(timeArray, timeSize) != null){
+timeStr =  getStringArrayAt(timeArray, timeSize);
+timexy = sprintf("%.2s", timeStr);
+timexy = Integer(timexy);
+if(timexy == hour) 
+{
+break;
+}else if(timexy &gt; hour) 
+{
+timeSize -= 1;
+break;
+}
+
+timeSize += 1;
+
+}
+   
+
+
+    }else{
+        itemSize =1;
+        titleArray  = pushBackStringArray(titleArray, "没有内容");
+timeSize =0;
+    }
+
+}
+
+
+
+if(timeSize &lt; 0) timeSize =0;
+setFocusItemIndex(timeSize);
+</gettvlist>
+
+
+
+<onEnter>
+setRefreshTime(1000);
+</onEnter>
+<onExit>
+setRefreshTime(-1);
+</onExit>
+<onRefresh>
+if (playdate &gt; 8) {postMessage("return");}
+playdate += 1;
+</onRefresh>
+<mediaDisplay name=threePartsView
+viewAreaXPC=0
+viewAreaYPC=15
+viewAreaWidthPC=94
+viewAreaHeightPC=78
+itemBackgroundColor=51:51:51
+backgroundColor=-1:-1:-1
+rollItems=yes
+fontSize=16
+itemImageXPC=0
+itemImageYPC=31
+itemXPC=6
+itemYPC=30.5
+itemHeightPC=11
+itemWidthPC=94
+itemPerPage=8
+showHeader=no
+showDefaultInfo=no>
+<backgroundDisplay name="IPtvEPGBackground">
+<image offsetXPC=0 offsetYPC=0 widthPC=100 heightPC=100><script>tmppath+"iptvepg_bg.png";</script></image>
+</backgroundDisplay>
+<text offsetXPC=37 offsetYPC=15 widthPC=100 heightPC=15 fontSize=18 backgroundColor=51:51:51>
+<script>nameTV+" "+dateTV;</script>
+</text>
+<itemDisplay>
+<text offsetXPC=0 offsetYPC=0 widthPC=100 heightPC=100 fontSize=18 backgroundColor=-1:-1:-1>
+<script>getStringArrayAt(timeArray, -1)+" "+getStringArrayAt(titleArray, -1);</script>
+</text>
+</itemDisplay>
+<onUserInput>
+playdate = 0;
+ret = "false";
+input = currentUserInput();
+if (input == "video_stop" || input == "return" || input == "display" || input == "option_red")
+{
+	ret = "return";
+}
+else if (input == "left")
+{
+	playid = getFocusItemIndex();
+	playid = minus(playid,8);
+	if (playid &lt; 0) {playid=0;}
+	setFocusItemIndex(playid);
+	redrawDisplay();
+	ret = "true";
+}
+else if (input == "right")
+{
+	playid = getFocusItemIndex();
+	playid = add(playid,8);
+	if (playid &gt; minus(itemSize,1)) {playid=minus(itemSize,1);}
+	setFocusItemIndex(playid);
+	redrawDisplay();
+	ret = "true";
+}
+else if (input == "video_play" || input == "enter" || input == "ENTR")
+{
+/*
+	setReturnString(getFocusItemIndex());
+*/
+	setReturnString( getURL("http://127.0.0.1/tvback.php?c="+epgID+"&amp;d="+year+"/"+month+"/"+day+"&amp;t="+getStringArrayAt(timeArray, -1)+"&amp;f="+tvbackxml) );
+	ret = "return";
+}
+else if (input == "pageup")
+{
+	day = Add(day, 1);
+	executeScript("gettvlist");
+	redrawDisplay();
+    writeStringToFile(TVBACKDATE, day);
+	ret = "true";
+}
+else if (input == "pagedown")
+{
+	day = Minus(day, 1);
+	executeScript("gettvlist");
+	redrawDisplay();
+    writeStringToFile(TVBACKDATE, day);
+	ret = "true";
+}
+ret;
+</onUserInput>
+</mediaDisplay>
+<channel>
+<itemSize>
+<script>itemSize;</script>
+</itemSize>
+</channel>
+</rss>
