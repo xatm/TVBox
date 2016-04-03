@@ -27,7 +27,8 @@ for ($i = 0; $i < 24; $i++){
     for ($j = 1; $j < 13; $j++){
         $xml_url = $xmlDoc->createElement( "url" );
         if($j < 10) { $j = "0".$j; }
-        $xml_url->nodeValue = "http://v.cctv.com/live_back/nettv_".$channel['c']."/".$channel['c']."-".$dayback."-".$i."-0".$j.".mp4";
+//        $xml_url->nodeValue = "http://v.cctv.com/flash/live_back/nettv_".$channel['c']."/".$channel['c']."-".$dayback."-".$i."-0".$j.".mp4";
+        $xml_url->nodeValue = "http://vod.cntv.lxdns.com/flash/live_back/nettv_".$channel['c']."/".$channel['c']."-".$dayback."-".$i."-0".$j.".mp4";
         $xml_tvback->appendChild($xml_url);
     }
 }
