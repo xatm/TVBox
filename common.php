@@ -71,7 +71,7 @@ function download($url, $referer = null, $post = null, $retries = 3) {
     }
     curl_close($curl);                             
 
-	return $data;                                   
+    return $data;                                   
 }                                                                                       
                                                                                                 
 ?>
